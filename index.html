@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+  <!-- Anti-Clickjacking Header -->
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'none';">
+
+
+    <meta charset="utf-8">
+    <title>GPS to Google Form</title>
+  </head>
+  <body>
+    <p>Fetching your location...</p>
+    <script>
+      navigator.geolocation.getCurrentPosition(function(position) {
+        var lat = position.coords.latitude;
+        var lon = position.coords.longitude;
+        var acc = position.coords.accuracy; // meters
+        var time = new Date(position.timestamp).toISOString();
+
+        // Kobo-style format: lat,lon,accuracy,timestamp
+        var coords = lat + "," + lon + "," + acc + "," + time;
+
+        // Google Form link with Location field entry ID
+        var formURL = "https://docs.google.com/forms/d/e/1FAIpQLSe6GwWXBsC8VSlQ-wfWNzXuMCqXYfVR1mWJUL1I8MHZfb-L5A/viewform?usp=pp_url&entry.295290673=" + encodeURIComponent(coords);
+
+        // Redirect directly to Google Form
+        window.location.href = formURL;
+      }, function(error) {
+        alert("Unable to get location: " + error.message);
+      }, {
+        enableHighAccuracy: true,
+        timeout: 10000
+      });
+    </script>
+  </body>
+</html>
