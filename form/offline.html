@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Offline Apprehension Form</title>
+<style>
+    body { font-family: Arial; padding: 15px; }
+    input, select, textarea { width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { padding: 10px; width: 100%; margin-top: 10px; }
+    .entry-box { border: 1px solid #aaa; padding: 10px; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<h2>Offline Apprehension Form</h2>
+<p>This form works offline. You can save up to 4 entries.</p>
+
+<form id="offlineForm">
+
+<h3>Form Fields</h3>
+
+<label>Location</label>
+<input id="loc" type="text">
+
+<label>Accused/Owner</label>
+<input id="owner" type="text">
+
+<label>Conveyance Kind/Type</label>
+<input id="ctype" type="text">
+
+<label>Conveyance Plate Number</label>
+<input id="cplate" type="text">
+
+<label>Conveyance Photo</label>
+<input id="cphoto" type="file" accept="image/*" capture="camera">
+
+<label>Violation/s</label>
+<textarea id="viol"></textarea>
+
+<label>Apprehending Office</label>
+<input id="office" type="text">
+
+<label>Place of Apprehension</label>
+<input id="place" type="text">
+
+<label>Date of Apprehension</label>
+<input id="date" type="date">
+
+<label>Time of Apprehension</label>
+<input id="time" type="time">
+
+<label>Kind of Implements/Equipment</label>
+<input id="equip" type="text">
+
+<label>Photos of Implements/Equipment</label>
+<input id="iphoto" type="file" accept="image/*" capture="camera">
+
+<label>Estimated Value of Implements (₱)</label>
+<input id="eval" type="number">
+
+<label>Kind of Forest Product</label>
+<input id="kfp" type="text">
+
+<label>Volume of FP (bd.ft)</label>
+<input id="vbd" type="number">
+
+<label>Volume of FP (cu.m)</label>
+<input id="vcm" type="number">
+
+<label>Value of Forest Product (₱)</label>
+<input id="vfp" type="number">
+
+<label>Value of Conveyance</label>
+<input id="vconv" type="number">
+
+<label>With Docket No.</label>
+<input id="docket" type="text">
+
+<label>Name of Prosecutor</label>
+<input id="pros" type="text">
+
+<label>Status</label>
+<input id="status" type="text">
+
+<button type="button" onclick="saveEntry()">💾 Save Offline</button>
+
+</form>
+
+<hr>
+
+<h2>Saved Entries</h2>
+<div id="savedEntries"></div>
+
+<script>
+let MAX_ENTRIES = 4;
+let FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe6GwWXBsC8VSlQ-wfWNzXuMCqXYfVR1mWJUL1I8MHZfb-L5A/viewform?usp=pp_url";
+
+function encodeImage(file, callback) {
+    if (!file) return callback("");
+    let reader = new FileReader();
+    reader.onload = e => callback(e.target.result);
+    reader.readAsDataURL(file);
+}
+
+function saveEntry() {
+    let entries = JSON.parse(localStorage.getItem("offline_entries") || "[]");
+
+    if (entries.length >= MAX_ENTRIES) {
+        alert("Maximum of 4 offline entries reached.");
+        return;
+    }
+
+    let cphoto = document.getElementById("cphoto").files[0];
+    let iphoto = document.getElementById("iphoto").files[0];
+
+    encodeImage(cphoto, function(cphoto64) {
+    encodeImage(iphoto, function(iphoto64) {
+
+        let data = {
+            loc: loc.value,
+            owner: owner.value,
+            ctype: ctype.value,
+            cplate: cplate.value,
+            cphoto: cphoto64,
+            viol: viol.value,
+            office: office.value,
+            place: place.value,
+            date: date.value,
+            time: time.value,
+            equip: equip.value,
+            iphoto: iphoto64,
+            eval: eval.value,
+            kfp: kfp.value,
+            vbd: vbd.value,
+            vcm: vcm.value,
+            vfp: vfp.value,
+            vconv: vconv.value,
+            docket: docket.value,
+            pros: pros.value,
+            status: status.value
+        };
+
+        entries.push(data);
+        localStorage.setItem("offline_entries", JSON.stringify(entries));
+        alert("Saved offline!");
+        loadEntries();
+
+    });});
+}
+
+function loadEntries() {
+    let entries = JSON.parse(localStorage.getItem("offline_entries") || "[]");
+    let box = document.getElementById("savedEntries");
+    box.innerHTML = "";
+
+    entries.forEach((e, i) => {
+        let div = document.createElement("div");
+        div.className = "entry-box";
+        div.innerHTML = `
+            <p><b>Entry ${i+1}</b></p>
+            <button onclick="submitEntry(${i})">Submit Online</button>
+            <button onclick="deleteEntry(${i})">Delete</button>
+        `;
+        box.appendChild(div);
+    });
+}
+
+function deleteEntry(i) {
+    let entries = JSON.parse(localStorage.getItem("offline_entries") || "[]");
+    entries.splice(i,1);
+    localStorage.setItem("offline_entries", JSON.stringify(entries));
+    loadEntries();
+}
+
+function submitEntry(i) {
+    let e = JSON.parse(localStorage.getItem("offline_entries"))[i];
+
+    let url = FORM_URL +
+        "&entry.295290673=" + encodeURIComponent(e.loc) +
+        "&entry.2069451506=" + encodeURIComponent(e.owner) +
+        "&entry.1837490944=" + encodeURIComponent(e.ctype) +
+        "&entry.188515031=" + encodeURIComponent(e.cplate) +
+        "&entry.1633204451=" + encodeURIComponent(e.cphoto) +
+        "&entry.891153704=" + encodeURIComponent(e.viol) +
+        "&entry.2059182374=" + encodeURIComponent(e.office) +
+        "&entry.1335444071=" + encodeURIComponent(e.place) +
+        "&entry.1207427156_year=" + encodeURIComponent(e.date) +
+        "&entry.717536715_minute=" + encodeURIComponent(e.time) +
+        "&entry.657817919=" + encodeURIComponent(e.equip) +
+        "&entry.1627013028=" + encodeURIComponent(e.iphoto) +
+        "&entry.2081407856=" + encodeURIComponent(e.eval) +
+        "&entry.2047698543=" + encodeURIComponent(e.kfp) +
+        "&entry.1864502108=" + encodeURIComponent(e.vbd) +
+        "&entry.888370899=" + encodeURIComponent(e.vcm) +
+        "&entry.956070071=" + encodeURIComponent(e.vfp) +
+        "&entry.1458555309=" + encodeURIComponent(e.vconv) +
+        "&entry.372486297=" + encodeURIComponent(e.docket) +
+        "&entry.2070258011=" + encodeURIComponent(e.pros) +
+        "&entry.627943749=" + encodeURIComponent(e.status);
+
+    window.open(url, "_blank");
+    alert("Form opened. Please submit manually. After submitting, click Delete to remove the entry.");
+}
+
+loadEntries();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Apprehension Offline Form</title>
+  <meta name="theme-color" content="#ffffff">
+  <style>
+    :root{--bg:#fff;--card:#fff;--muted:#666;--accent:#0b5cff}
+    body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#111;margin:0;padding:16px}
+    header{display:flex;align-items:center;gap:12px}
+    h1{font-size:18px;margin:0}
+    p.lead{margin:6px 0 14px;color:var(--muted);font-size:14px}
+    .card{background:var(--card);border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+    label{font-weight:600;font-size:13px;margin-top:8px;display:block}
+    input,select,textarea,button{font-size:14px}
+    input,textarea,select{width:100%;padding:10px;border:1px solid #e6e6e6;border-radius:8px;box-sizing:border-box}
+    textarea{min-height:84px}
+    .row{display:flex;gap:8px}
+    .row .col{flex:1}
+    .photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    img.preview{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid #ddd}
+    .controls{display:flex;gap:8px;margin-top:10px}
+    .btn{background:var(--accent);color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer}
+    .btn.secondary{background:#f2f4f8;color:#111}
+    .small{font-size:13px;color:var(--muted)}
+    #pendingList .entry{margin-bottom:8px}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
+    @media(min-width:720px){body{max-width:720px;margin:18px auto}}
+  </style>
+</head>
+<body>
+  <header>
+    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'><rect rx='5' fill='%23000000' width='24' height='24'/></svg>" alt="logo" width="36" height="36">
+    <div>
+      <h1>Apprehension Offline Form</h1>
+      <div class="small">White / clean minimal • Installable (PWA-ready)</div>
+    </div>
+  </header>
+
+  <p class="lead">Fill the form offline. You can save up to <strong>4 pending entries</strong>. When online, open each saved entry in the Google Form for manual submission and then mark it submitted here.</p>
+
+  <div class="card" id="formCard">
+    <div class="flex-between"><strong>New Entry</strong><div class="small">Pending slots: <span id="slotCount">0</span>/<span id="maxSlots">4</span></div></div>
+
+    <form id="mainForm" onsubmit="return false">
+      <label>Location (GPS)</label>
+      <div class="row">
+        <div class="col"><input id="location_field" readonly placeholder="Tap 'Get GPS' to capture"></div>
+        <div style="width:120px"><button id="getGpsBtn" class="btn secondary" type="button">Get GPS</button></div>
+      </div>
+
+      <label>Accused / Owner</label>
+      <input id="accused_owner" autocomplete="name" placeholder="Name of accused or owner">
+
+      <label>Conveyance Kind / Type</label>
+      <input id="conveyance_kind" placeholder="e.g., Motorcycle, Truck">
+
+      <label>Conveyance Plate Number</label>
+      <input id="conveyance_plate" placeholder="Plate number">
+
+      <label>Conveyance Photo (keep for manual attach)</label>
+      <input id="conveyance_photo" type="file" accept="image/*" capture="environment">
+
+      <label>Violation/s</label>
+      <input id="violations">
+
+      <label>Apprehending Office</label>
+      <input id="apprehending_office">
+
+      <label>Place of Apprehension</label>
+      <input id="place_of_apprehension">
+
+      <div class="row">
+        <div class="col">
+          <label>Date of Apprehension</label>
+          <input id="date_of_apprehension" type="date">
+        </div>
+        <div class="col">
+          <label>Time of Apprehension</label>
+          <input id="time_of_apprehension" type="time">
+        </div>
+      </div>
+
+      <label>Kind of Implements / Equipment</label>
+      <input id="implements_kind">
+
+      <label>Photos of Implements / Equipment (keep for manual attach)</label>
+      <input id="implements_photos" type="file" accept="image/*" capture="environment" multiple>
+
+      <label>Estimated Value of Implements (Php)</label>
+      <input id="estimated_value_of_implements" type="number" step="0.01">
+
+      <label>Kind of Forest Product</label>
+      <input id="kind_of_forest_product">
+
+      <div class="row">
+        <div class="col"><label>Volume of FP (bd.ft)</label><input id="volume_bdft" type="number" step="0.01"></div>
+        <div class="col"><label>Volume of FP (cu.m)</label><input id="volume_cum" type="number" step="0.01"></div>
+      </div>
+
+      <label>Value of Forest Product (Php)</label>
+      <input id="value_of_fp" type="number" step="0.01">
+
+      <label>Value of Conveyance (Php)</label>
+      <input id="value_of_conveyance" type="number" step="0.01">
+
+      <label>With Docket No.</label>
+      <input id="with_docket_no">
+
+      <label>Name of Prosecutor</label>
+      <input id="name_of_prosecutor">
+
+      <label>Status</label>
+      <input id="status_field">
+
+      <div class="controls">
+        <button id="saveBtn" class="btn" type="button">💾 Save Entry Offline</button>
+        <button id="clearBtn" class="btn secondary" type="button">Clear Form</button>
+      </div>
+      <div id="formStatus" class="small" style="margin-top:8px"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="flex-between"><strong>Pending Entries</strong><button id="syncAllBtn" class="btn secondary" style="width:auto">Open All in Google Form</button></div>
+    <div id="pendingList" class="small" style="margin-top:8px">Loading…</div>
+  </div>
+
+  <footer>
+    <div class="small">After you submit on Google Form, return here and press <em>Mark as Submitted</em> for that entry to remove it locally.</div>
+  </footer>
+
+  <!-- Minimal manifest and service worker generation handled at runtime so this single file is portable -->
+  <script>
+  // Configuration
+  const MAX_PENDING = 4;
+  const MAX_IMPL_PHOTOS = 4; // limit how many implement photos to store
+  const GOOGLE_FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLSe6GwWXBsC8VSlQ-wfWNzXuMCqXYfVR1mWJUL1I8MHZfb-L5A/viewform?usp=pp_url";
+  const FIELD_MAP = {
+    location: 'entry.295290673',
+    accused_owner: 'entry.2069451506',
+    conveyance_kind: 'entry.1837490944',
+    conveyance_plate: 'entry.188515031',
+    conveyance_photo: 'entry.1633204451',
+    violations: 'entry.891153704',
+    apprehending_office: 'entry.2059182374',
+    place_of_apprehension: 'entry.1335444071',
+    date_of_apprehension_year: 'entry.1207427156_year',
+    time_of_apprehension_minute: 'entry.717536715_minute',
+    implements_kind: 'entry.657817919',
+    implements_photos: 'entry.1627013028',
+    estimated_value_of_implements: 'entry.2081407856',
+    kind_of_forest_product: 'entry.2047698543',
+    volume_bdft: 'entry.1864502108',
+    volume_cum: 'entry.888370899',
+    value_of_fp: 'entry.956070071',
+    value_of_conveyance: 'entry.1458555309',
+    with_docket_no: 'entry.372486297',
+    name_of_prosecutor: 'entry.2070258011',
+    status: 'entry.627943749'
+  };
+
+  // IndexedDB helper
+  const DB_NAME = 'apprehension_offline_db_v1';
+  const STORE = 'entries';
+  let db;
+  function openDB(){
+    return new Promise((res,rej)=>{
+      const rq = indexedDB.open(DB_NAME,1);
+      rq.onupgradeneeded = e => {
+        db = e.target.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:'id'});
+      };
+      rq.onsuccess = e => { db = e.target.result; res(db); };
+      rq.onerror = e => rej(e);
+    });
+  }
+  async function getAllEntries(){ await openDB(); return new Promise((res,rej)=>{ const tx = db.transaction(STORE,'readonly'); const st = tx.objectStore(STORE); const rq = st.getAll(); rq.onsuccess = ()=> res(rq.result.sort((a,b)=> b.created - a.created)); rq.onerror = e=> rej(e); }); }
+  async function saveEntryToDB(obj){ await openDB(); return new Promise((res,rej)=>{ const tx = db.transaction(STORE,'readwrite'); const st = tx.objectStore(STORE); st.put(obj); tx.oncomplete = ()=> res(true); tx.onerror = e=> rej(e); }); }
+  async function deleteEntryFromDB(id){ await openDB(); return new Promise((res,rej)=>{ const tx = db.transaction(STORE,'readwrite'); const st = tx.objectStore(STORE); st.delete(id); tx.oncomplete = ()=> res(true); tx.onerror = e=> rej(e); }); }
+
+  // UI refs
+  const slotCount = document.getElementById('slotCount');
+  const maxSlots = document.getElementById('maxSlots'); maxSlots.innerText = MAX_PENDING;
+  const formStatus = document.getElementById('formStatus');
+
+  // File inputs and temporary arrays
+  const convInput = document.getElementById('conveyance_photo');
+  const implInput = document.getElementById('implements_photos');
+
+  // Read files as blobs (we store File objects directly; modern browsers support that in IndexedDB)
+  function readFilesAsArray(files, limit){ const arr = Array.from(files||[]).slice(0, limit); return arr; }
+
+  // Collect form data
+  function collectForm(){
+    return {
+      accused_owner: document.getElementById('accused_owner').value || '',
+      conveyance_kind: document.getElementById('conveyance_kind').value || '',
+      conveyance_plate: document.getElementById('conveyance_plate').value || '',
+      violations: document.getElementById('violations').value || '',
+      apprehending_office: document.getElementById('apprehending_office').value || '',
+      place_of_apprehension: document.getElementById('place_of_apprehension').value || '',
+      date_of_apprehension: document.getElementById('date_of_apprehension').value || '',
+      time_of_apprehension: document.getElementById('time_of_apprehension').value || '',
+      implements_kind: document.getElementById('implements_kind').value || '',
+      estimated_value_of_implements: document.getElementById('estimated_value_of_implements').value || '',
+      kind_of_forest_product: document.getElementById('kind_of_forest_product').value || '',
+      volume_bdft: document.getElementById('volume_bdft').value || '',
+      volume_cum: document.getElementById('volume_cum').value || '',
+      value_of_fp: document.getElementById('value_of_fp').value || '',
+      value_of_conveyance: document.getElementById('value_of_conveyance').value || '',
+      with_docket_no: document.getElementById('with_docket_no').value || '',
+      name_of_prosecutor: document.getElementById('name_of_prosecutor').value || '',
+      status: document.getElementById('status_field').value || '',
+      location: document.getElementById('location_field').value || ''
+    };
+  }
+
+  // Save entry
+  document.getElementById('saveBtn').addEventListener('click', async ()=>{
+    try{
+      const entries = await getAllEntries();
+      if(entries.length >= MAX_PENDING){ formStatus.innerText = `Maximum ${MAX_PENDING} pending entries reached.`; return; }
+      const data = collectForm();
+      const convFiles = readFilesAsArray(convInput.files,1);
+      const implFiles = readFilesAsArray(implInput.files, MAX_IMPL_PHOTOS);
+      const entry = { id: 'e_'+Date.now(), created: Date.now(), data, convFiles, implFiles };
+      await saveEntryToDB(entry);
+      clearForm(); await refreshPending(); formStatus.innerText = 'Saved offline.';
+    }catch(err){ console.error(err); formStatus.innerText = 'Save failed.'; }
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', ()=>{ clearForm(); formStatus.innerText = 'Form cleared.'; });
+
+  function clearForm(){ document.getElementById('mainForm').reset(); document.getElementById('location_field').value = ''; }
+
+  // GPS
+  document.getElementById('getGpsBtn').addEventListener('click', ()=>{
+    formStatus.innerText = 'Getting GPS — allow permission if prompted.';
+    if(!navigator.geolocation){ formStatus.innerText = 'Geolocation not supported.'; return; }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const lat = pos.coords.latitude; const lon = pos.coords.longitude; const acc = pos.coords.accuracy; const time = new Date(pos.timestamp).toISOString();
+      document.getElementById('location_field').value = `${lat},${lon},${acc},${time}`;
+      formStatus.innerText = 'GPS captured.';
+    }, err=>{ formStatus.innerText = 'GPS error: '+err.message; }, {enableHighAccuracy:true, timeout:15000});
+  });
+
+  // Pending list
+  async function refreshPending(){
+    const list = document.getElementById('pendingList');
+    try{
+      const entries = await getAllEntries();
+      slotCount.innerText = entries.length;
+      if(entries.length===0){ list.innerHTML = '<div class="small">No pending entries.</div>'; return; }
+      list.innerHTML = '';
+      entries.forEach(ent=>{
+        const div = document.createElement('div'); div.className='entry card';
+        const date = new Date(ent.created).toLocaleString();
+        const title = document.createElement('div'); title.className='flex-between'; title.innerHTML = `<div><strong>${ent.data.accused_owner||'(No name)'}</strong><div class='small'>${date}</div></div>`;
+        const actions = document.createElement('div'); actions.style.marginTop='8px';
+        const openBtn = document.createElement('button'); openBtn.className='btn secondary'; openBtn.textContent='Open in Google Form'; openBtn.onclick = ()=> openInGoogleForm(ent);
+        const markBtn = document.createElement('button'); markBtn.className='btn'; markBtn.textContent='Mark as Submitted'; markBtn.onclick = async ()=>{ await deleteEntryFromDB(ent.id); await refreshPending(); };
+        const dlBtn = document.createElement('button'); dlBtn.className='btn secondary'; dlBtn.textContent='Download Photos'; dlBtn.onclick = ()=> downloadPhotos(ent);
+        actions.appendChild(openBtn); actions.appendChild(markBtn); actions.appendChild(dlBtn);
+
+        // thumbs
+        const thumbs = document.createElement('div'); thumbs.style.marginTop='8px';
+        if((ent.convFiles && ent.convFiles.length) || (ent.implFiles && ent.implFiles.length)){
+          (ent.convFiles||[]).forEach(f=>{ const im = document.createElement('img'); im.className='preview'; try{ im.src = URL.createObjectURL(f);}catch(e){} thumbs.appendChild(im); });
+          (ent.implFiles||[]).forEach(f=>{ const im = document.createElement('img'); im.className='preview'; try{ im.src = URL.createObjectURL(f);}catch(e){} thumbs.appendChild(im); });
+        } else thumbs.innerHTML = '<div class="small">No photos saved</div>';
+
+        div.appendChild(title); div.appendChild(thumbs); div.appendChild(actions);
+        list.appendChild(div);
+      });
+    }catch(err){ console.error(err); list.innerHTML = '<div class="small">Could not load entries.</div>'; }
+  }
+
+  // Download photos to device for manual attach
+  function downloadPhotos(entry){ const all = (entry.convFiles||[]).concat(entry.implFiles||[]); if(all.length===0){ alert('No photos'); return;} all.forEach((f,i)=>{ const url = URL.createObjectURL(f); const a = document.createElement('a'); a.href=url; a.download = `entry-${entry.id}-photo${i+1}.jpg`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }); alert('Download started — check Downloads to attach photos to Google Form.'); }
+
+  // Open prefilled Google Form in new tab for manual submit
+  function openInGoogleForm(entry){ const d = entry.data; // build query string for prefill
+    const qs = [];
+    function add(k,v){ if(!v) return; qs.push(k+'='+encodeURIComponent(v)); }
+    add(FIELD_MAP.location, d.location);
+    add(FIELD_MAP.accused_owner, d.accused_owner);
+    add(FIELD_MAP.conveyance_kind, d.conveyance_kind);
+    add(FIELD_MAP.conveyance_plate, d.conveyance_plate);
+    // for photo fields we append a short note so reviewer knows to attach photos saved on device
+    add(FIELD_MAP.conveyance_photo, '(Photos saved offline on device — attach manually)');
+    add(FIELD_MAP.violations, d.violations);
+    add(FIELD_MAP.apprehending_office, d.apprehending_office);
+    add(FIELD_MAP.place_of_apprehension, d.place_of_apprehension);
+    add(FIELD_MAP.date_of_apprehension_year, d.date_of_apprehension);
+    add(FIELD_MAP.time_of_apprehension_minute, d.time_of_apprehension);
+    add(FIELD_MAP.implements_kind, d.implements_kind);
+    add(FIELD_MAP.implements_photos, '(Photos saved offline on device — attach manually)');
+    add(FIELD_MAP.estimated_value_of_implements, d.estimated_value_of_implements);
+    add(FIELD_MAP.kind_of_forest_product, d.kind_of_forest_product);
+    add(FIELD_MAP.volume_bdft, d.volume_bdft);
+    add(FIELD_MAP.volume_cum, d.volume_cum);
+    add(FIELD_MAP.value_of_fp, d.value_of_fp);
+    add(FIELD_MAP.value_of_conveyance, d.value_of_conveyance);
+    add(FIELD_MAP.with_docket_no, d.with_docket_no);
+    add(FIELD_MAP.name_of_prosecutor, d.name_of_prosecutor);
+    add(FIELD_MAP.status, d.status);
+    const url = GOOGLE_FORM_BASE + '&' + qs.join('&'); window.open(url,'_blank');
+  }
+
+  // Sync all: open each pending entry in its own tab (user must submit each manually)
+  document.getElementById('syncAllBtn').addEventListener('click', async ()=>{
+    const entries = await getAllEntries(); if(entries.length===0){ alert('No pending entries'); return; }
+    entries.forEach(ent=> openInGoogleForm(ent));
+    alert('All pending entries opened in new tabs. Submit each manually in Google Form, then return here and press "Mark as Submitted" to remove them.');
+  });
+
+  // Initialize
+  (async function init(){ try{ await openDB(); await refreshPending(); }catch(e){ console.error(e);} })();
+
+  // ----- PWA: create manifest and service worker dynamically (best-effort). Note: for full PWA installability a secure origin (HTTPS or localhost) is required in most browsers. -----
+  (function setupPWA(){
+    // Create manifest blob and link it
+    const manifest = {
+      name: 'Apprehension Offline Form',
+      short_name: 'Apprehension',
+      start_url: '.',
+      display: 'standalone',
+      background_color: '#ffffff',
+      theme_color: '#ffffff',
+      icons: [{ src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAAF0lEQVR42u3BAQ0AAADCoPdPbQ43oAAAAAAAAACwF4nAAAGySURBVHja7JpRDoMgDEWbq/0q9xK2p7bQY0g1g9w7Gm9tI7m3C4m7bY1mymQBiQYBjVgI1YCNWAjVgI1YCNWAjVgI1YCNWAjVgI1YCNWAjVgI1YCNWAjVgI1YCNWAjVgI1YCNWAv0w0iSCDN/2Yl2DEb2t7g0X2w0n8D1yq3k3z7oZ2k0k7m+ntp6f7mG6bXl4gO2Ewzv+VvQAAAABJRU5ErkJggg==' , sizes:'64x64', type:'image/png'}]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    const link = document.createElement('link'); link.rel = 'manifest'; link.href = manifestURL; document.head.appendChild(link);
+
+    // Create a simple service worker script as a blob and try to register it
+    const swCode = `self.addEventListener('install', event => { self.skipWaiting(); });
+    self.addEventListener('activate', event => { event.waitUntil(self.clients.claim()); });
+    self.addEventListener('fetch', event => { /* network-first for form pages, fallback to cache */ });`;
+    try{
+      const swBlob = new Blob([swCode], {type:'application/javascript'});
+      const swURL = URL.createObjectURL(swBlob);
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.register(swURL).then(()=> console.log('Service worker registered (blob).')).catch(e=> console.warn('SW register failed:',e));
+      }
+    }catch(e){ console.warn('PWA setup failed', e); }
+  })();
+
+  // Helpful note for user
+  console.log('App initialized. Note: for full PWA installability service workers require serving over HTTPS or localhost in most browsers.');
+  </script>
+</body>
+</html>
